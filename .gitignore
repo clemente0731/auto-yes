@@ -1,0 +1,47 @@
+# byte-compiled / optimized
+__pycache__/
+*.py[cod]
+*$py.class
+
+# distribution / packaging
+dist/
+build/
+*.egg-info/
+*.egg
+.eggs/
+
+# virtual environments
+.venv/
+venv/
+env/
+
+# testing / coverage
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# type checking / linting
+.mypy_cache/
+.ruff_cache/
+
+# tox
+.tox/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# environment files
+.env
+.env.local
+
+# C extensions
+*.so
