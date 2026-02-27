@@ -2,9 +2,10 @@
 
 Usage (recommended)::
 
-    auto-yes claude "fix tests"        wrap an AI CLI tool directly
-    auto-yes cursor                    wrap cursor-agent
+    auto-yes claude "fix tests"        wrap claude directly
+    auto-yes cursor chat "fix bug"     wrap cursor agent CLI (runs ``agent``)
     auto-yes aider --model gpt-4      wrap aider with arguments
+    auto-yes copilot                   wrap gh copilot
 
 Usage (advanced)::
 

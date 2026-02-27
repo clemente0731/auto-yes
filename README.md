@@ -22,15 +22,30 @@ pip install auto-yes[windows]
 
 ## Quick start
 
-### Shell session mode
+### Wrap an AI CLI tool (recommended)
 
-Start a new shell where every interactive prompt is answered automatically:
+The simplest way: `auto-yes <profile> [args...]` wraps a tool in a single
+process with auto-responses enabled and verbose output on by default:
 
 ```bash
-auto-yes --on
+auto-yes claude "fix the tests"        # runs: claude "fix the tests"
+auto-yes cursor chat "fix the bug"     # runs: agent chat "fix the bug"
+auto-yes aider --model gpt-4          # runs: aider --model gpt-4
+auto-yes copilot                       # runs: gh copilot
+auto-yes amazonq chat "help me"        # runs: q chat "help me"
+```
+
+The profile name is mapped to the real binary automatically (e.g. `cursor`
+runs `agent`, `copilot` runs `gh copilot`).  Run `auto-yes list` to see all
+available profiles and their real commands.
+
+### Shell session mode
+
+Start a persistent shell where every prompt is answered automatically:
+
+```bash
+auto-yes --on --cli claude
 # you are now inside an auto-yes shell
-apt install nginx          # [y/n] → y  (auto)
-pip install flask          # Proceed? → y  (auto)
 exit                       # leave the session
 ```
 
@@ -40,7 +55,7 @@ Wrap one command without entering a persistent session:
 
 ```bash
 auto-yes run -- apt install nginx
-auto-yes run -- pip install flask
+auto-yes run --cli codex -- codex "fix tests"
 ```
 
 ### Check status
@@ -83,13 +98,15 @@ User terminal  ←→  PTY proxy (auto-yes)  ←→  Child process
 ## CLI reference
 
 ```
+auto-yes <profile> [ARGS...]       wrap an AI CLI tool directly (recommended)
 auto-yes --on [OPTIONS]            start an auto-yes shell session
-auto-yes --off                     exit info
-auto-yes status                    check if auto-yes is active
 auto-yes run [OPTIONS] -- CMD...   run a single command with auto-yes
+auto-yes list, -l, --list          list all available CLI profiles
 auto-yes patterns [CATEGORY...]    list prompt patterns (optionally filtered)
 auto-yes add-pattern PATTERN       persist a custom regex pattern
 auto-yes del-pattern PATTERN       remove a custom pattern
+auto-yes status                    check if auto-yes is active
+auto-yes --off                     exit info
 ```
 
 ### Options (for `--on` and `run`)
@@ -127,32 +144,36 @@ is **always loaded**.  AI CLI profiles are opt-in via `--cli`.
 
 ### AI CLI profiles
 
-| Profile | Tool | Key patterns |
-|---------|------|-------------|
-| `claude` | Anthropic Claude Code | `1. Yes, I trust this folder`, `Yes, allow`, API key prompt |
-| `gemini` | Google Gemini CLI | `1. Allow once`, `2. Allow for this session`, `3. Always allow` |
-| `codex` | OpenAI Codex CLI | `1. Approve and run now`, `1. Yes, allow Codex to work` |
-| `copilot` | GitHub Copilot CLI | `1. Yes, proceed`, `Allow Copilot to run` |
-| `cursor` | Cursor Agent CLI | `→ Run (once) (y)`, `→ Run (always) (a)`, `Skip (esc or n)`, `Trust this workspace` |
-| `grok` | xAI Grok CLI | `1. Yes` |
-| `auggie` | Augment Code CLI | `[Y] Enable indexing` |
-| `amp` | Sourcegraph Amp CLI | `Approve` |
-| `aider` | Aider AI Coding | `(Y)es/(N)o`, `Run shell command?`, `Add … to the chat?`, `Apply edit to …?` |
-| `openhands` | OpenHands AI Agent | `Do you want to execute this action?`, `Approve` |
-| `windsurf` | Codeium Windsurf | `Accept changes?`, `Run this command?` |
-| `qwen` | Alibaba Qwen Code | `1. Yes`, `Approve execution?` |
-| `amazonq` | Amazon Q Developer | `Do you approve this action?`, `Accept suggestion?` |
+| Profile | Command | Tool | Key patterns |
+|---------|---------|------|-------------|
+| `claude` | `claude` | Anthropic Claude Code | `1. Yes, I trust this folder`, `Yes, allow`, API key prompt |
+| `gemini` | `gemini` | Google Gemini CLI | `1. Allow once`, `2. Allow for this session`, `3. Always allow` |
+| `codex` | `codex` | OpenAI Codex CLI | `1. Approve and run now`, `1. Yes, allow Codex to work` |
+| `copilot` | `gh copilot` | GitHub Copilot CLI | `1. Yes, proceed`, `Allow Copilot to run` |
+| `cursor` | `agent` | Cursor Agent CLI | `→ Run (once) (y)`, `→ Run (always) (a)`, `Trust this workspace` |
+| `grok` | `grok` | xAI Grok CLI | `1. Yes` |
+| `auggie` | `auggie` | Augment Code CLI | `[Y] Enable indexing` |
+| `amp` | `amp` | Sourcegraph Amp CLI | `Approve` |
+| `aider` | `aider` | Aider AI Coding | `(Y)es/(N)o`, `Run shell command?`, `Add … to the chat?` |
+| `openhands` | `openhands` | OpenHands AI Agent | `Do you want to execute this action?`, `Approve` |
+| `windsurf` | `windsurf` | Codeium Windsurf | `Accept changes?`, `Run this command?` |
+| `qwen` | `qwen` | Alibaba Qwen Code | `1. Yes`, `Approve execution?` |
+| `amazonq` | `q` | Amazon Q Developer | `Do you approve this action?`, `Accept suggestion?` |
 
 ```bash
-# use with a specific AI CLI
-auto-yes run --cli claude -- claude "fix the tests"
-auto-yes --on --cli codex
+# recommended: wrap directly
+auto-yes claude "fix the tests"
+auto-yes cursor chat "fix the bug"
 
-# load all AI CLI profiles at once
+# advanced: explicit run mode
+auto-yes run --cli codex -- codex "fix tests"
 auto-yes --on --cli all
 
 # inspect patterns for a specific profile
 auto-yes patterns claude codex
+
+# list all profiles and their real commands
+auto-yes list
 ```
 
 ### Custom patterns
@@ -172,6 +193,7 @@ Add a new entry to `REGISTRY` in `src/auto_yes/patterns.py`:
 ```python
 _MY_TOOL = {
     "description": "My AI Tool CLI",
+    "command": ["my-tool"],              # real binary name (list of strings)
     "patterns": [
         (r"pattern_regex_here", None),    # respond with default
         (r"another_pattern", "yes"),      # respond with "yes"
@@ -181,7 +203,9 @@ _MY_TOOL = {
 REGISTRY["my-tool"] = _MY_TOOL
 ```
 
-No other file needs to change.
+The `command` field maps the profile name to the real binary.  For example,
+the `cursor` profile has `"command": ["agent"]`, and `copilot` has
+`"command": ["gh", "copilot"]`.  No other file needs to change.
 
 ## Configuration
 
@@ -220,14 +244,16 @@ Stored at `~/.config/auto-yes/config.json` (Linux/macOS) or
 
 ```python
 from auto_yes.runner import Runner
+from auto_yes.patterns import get_command
 
 # generic patterns only
 runner = Runner(response="y", cooldown=0.5, verbose=True)
 exit_code = runner.run_command(["apt", "install", "nginx"])
 
-# with AI CLI profile
-runner = Runner(categories=["generic", "claude"], verbose=True)
-exit_code = runner.run_command(["claude", "fix the tests"])
+# with AI CLI profile (using real binary name from registry)
+runner = Runner(categories=["generic", "cursor"], verbose=True)
+cmd = get_command("cursor")          # -> ["agent"]
+exit_code = runner.run_command(cmd + ["chat", "fix the bug"])
 ```
 
 ## Development
