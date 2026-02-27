@@ -74,8 +74,16 @@ fix cooldown check on select timeout
 3. Commit: `git commit -m "release v0.2.0"`.
 4. Tag: `git tag v0.2.0`.
 5. Push: `git push origin main --tags`.
-6. Create a GitHub Release from the tag — the `publish.yml` workflow
-   will upload to PyPI automatically via trusted publishing.
+
+Pushing the tag triggers `release.yml` which automatically:
+- Runs lint + tests as a quality gate
+- Builds the sdist and wheel
+- Creates a **GitHub Release** with changelog notes and attached artifacts
+- Publishes to **TestPyPI** then **PyPI** via OIDC trusted publishing
+
+> **First-time setup**: configure trusted publishing on PyPI and TestPyPI
+> by adding the GitHub repository as a trusted publisher for the `pypi`
+> and `testpypi` environments respectively.
 
 ## Code of conduct
 

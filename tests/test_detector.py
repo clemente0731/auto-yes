@@ -72,6 +72,29 @@ class TestGenericSpecial:
         assert self.det.detect("Is this ok [y/d/N]:") is not None
 
 
+class TestNeedRequirePrompts:
+    def setup_method(self):
+        self.det = PromptDetector()
+
+    def test_need_to_install(self):
+        assert self.det.detect("Need to install the following packages?") is not None
+
+    def test_do_you_need_to(self):
+        assert self.det.detect("Do you need to download dependencies?") is not None
+
+    def test_required_question(self):
+        assert self.det.detect("Installation required?") is not None
+
+    def test_requires_question(self):
+        assert self.det.detect("This action requires elevated access, continue?") is not None
+
+    def test_necessary_question(self):
+        assert self.det.detect("Is this step necessary?") is not None
+
+    def test_need_no_question_mark_no_match(self):
+        assert self.det.detect("You will need to restart later.") is None
+
+
 # ==================================================================
 # false-positive prevention
 # ==================================================================
@@ -139,8 +162,32 @@ class TestCursorPatterns:
     def setup_method(self):
         self.det = PromptDetector(categories=["generic", "cursor"])
 
-    def test_run_once(self):
+    def test_run_once_with_enter(self):
         assert self.det.detect("→ Run (once) (y) (enter)") is not None
+
+    def test_run_once_without_enter(self):
+        assert self.det.detect("→ Run (once) (y)") is not None
+
+    def test_run_once_inside_box(self):
+        assert self.det.detect(" │  → Run (once) (y) (enter)  │") is not None
+
+    def test_run_once_inside_box_no_enter(self):
+        assert self.det.detect(" │  → Run (once) (y)  │") is not None
+
+    def test_skip_esc_or_n(self):
+        assert self.det.detect("    Skip (esc or n)") is not None
+
+    def test_skip_inside_box(self):
+        assert self.det.detect(" │    Skip (esc or n)      ") is not None
+
+    def test_approval_dialog_last_line_is_skip(self):
+        text = (
+            " Waiting for approval...\n"
+            " │ Run this command?\n"
+            " │  → Run (once) (y) (enter)\n"
+            " │    Skip (esc or n)      "
+        )
+        assert self.det.detect(text) is not None
 
     def test_trust_workspace(self):
         assert self.det.detect("▶ [a] Trust this workspace") is not None

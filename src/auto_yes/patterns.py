@@ -54,6 +54,11 @@ _GENERIC = {
         (r"Is this ok\s*\[", None),
         (r"Do you want to install\b.*\?", None),
 
+        # --- need / require prompts ---
+        (r"\b[Nn]eed\s+to\b.*\?", None),
+        (r"\b[Rr]equire[ds]?\b.*\?", None),
+        (r"\b[Nn]ecessary\b.*\?", None),
+
         # --- "type yes to confirm" ---
         (r"[Tt]ype\s+'?yes'?\s+to\s+(?:continue|confirm|proceed)", "yes"),
 
@@ -116,7 +121,8 @@ _COPILOT = {
 _CURSOR = {
     "description": "Cursor Agent CLI",
     "patterns": [
-        (r"→\s*Run\s+\(once\)\s+\(y\)\s+\(enter\)", None),
+        (r"→\s*Run\s+\(once\)\s+\(y\)(?:\s+\(enter\))?", None),
+        (r"Skip\s+\(esc\s+or\s+n\)", None),
         (r"▶\s*\[a\]\s*Trust this workspace", None),
     ],
 }
