@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.2.0] - 2026-02-27
+## [0.9.0] - 2026-02-27
 
 ### Added
 
@@ -42,6 +42,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `--verbose` mode showing each auto-response
 - PEP 561 `py.typed` marker
 
-[Unreleased]: https://github.com/clemente0731/auto-yes/compare/v0.2.0...HEAD
-[0.2.0]: https://github.com/clemente0731/auto-yes/compare/v0.1.0...v0.2.0
+[Unreleased]: https://github.com/clemente0731/auto-yes/compare/v0.9.0...HEAD
+[0.9.0]: https://github.com/clemente0731/auto-yes/compare/v0.1.0...v0.9.0
 [0.1.0]: https://github.com/clemente0731/auto-yes/releases/tag/v0.1.0

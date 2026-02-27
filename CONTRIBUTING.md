@@ -71,8 +71,8 @@ fix cooldown check on select timeout
 
 1. Update `version` in `pyproject.toml` and `src/auto_yes/__init__.py`.
 2. Add a section to `CHANGELOG.md`.
-3. Commit: `git commit -m "release v0.2.0"`.
-4. Tag: `git tag v0.2.0`.
+3. Commit: `git commit -m "release v0.9.0"`.
+4. Tag: `git tag v0.9.0`.
 5. Push: `git push origin main --tags`.
 
 Pushing the tag triggers `release.yml` which automatically:
