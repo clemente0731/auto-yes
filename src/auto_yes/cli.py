@@ -1,11 +1,16 @@
 """Command-line interface for auto-yes.
 
-Usage::
+Usage (recommended)::
+
+    auto-yes claude "fix tests"        wrap an AI CLI tool directly
+    auto-yes cursor                    wrap cursor-agent
+    auto-yes aider --model gpt-4      wrap aider with arguments
+
+Usage (advanced)::
 
     auto-yes --on [OPTIONS]            start an auto-yes shell session
-    auto-yes --off                     show how to exit the session
-    auto-yes status                    check whether auto-yes is active
     auto-yes run [OPTIONS] -- CMD...   run a single command with auto-yes
+    auto-yes list (-l, --list)         list all available CLI profiles
     auto-yes patterns [CATEGORY...]    list prompt patterns
     auto-yes add-pattern PATTERN       persist a custom pattern
     auto-yes del-pattern PATTERN       remove a custom pattern
@@ -26,6 +31,7 @@ _PROG = "auto-yes"
 # helpers
 # ------------------------------------------------------------------
 
+
 def _resolve_categories(cli_flags):
     """Turn the ``--cli`` flag values into a deduplicated category list.
 
@@ -34,7 +40,7 @@ def _resolve_categories(cli_flags):
     """
     categories = ["generic"]
 
-    for name in (cli_flags or []):
+    for name in cli_flags or []:
         if name == "all":
             for key in REGISTRY:
                 if key not in categories:
@@ -44,8 +50,8 @@ def _resolve_categories(cli_flags):
                 categories.append(name)
         else:
             print(
-                "warning: unknown CLI profile '{}', ignored.  "
-                "available: {}".format(name, ", ".join(sorted(REGISTRY))),
+                f"warning: unknown CLI profile '{name}', ignored.  "
+                f"available: {', '.join(sorted(REGISTRY))}",
                 file=sys.stderr,
             )
 
@@ -78,21 +84,29 @@ def _make_opts_parser(prog):
     parser = argparse.ArgumentParser(prog=prog, add_help=False)
     parser.add_argument("--response", default=None, help="text to send (default: y)")
     parser.add_argument(
-        "--cooldown", type=float, default=None,
+        "--cooldown",
+        type=float,
+        default=None,
         help="seconds between auto-responses (default: 0.5)",
     )
     parser.add_argument(
-        "--verbose", "-v", action="store_true",
+        "--verbose",
+        "-v",
+        action="store_true",
         help="print a notice every time auto-yes responds",
     )
     parser.add_argument(
-        "--pattern", action="append", default=[],
+        "--pattern",
+        action="append",
+        default=[],
         help="additional regex pattern (repeatable)",
     )
     parser.add_argument(
-        "--cli", action="append", default=[],
-        help="AI CLI profile to load (repeatable, or 'all').  "
-             "choices: {}".format(", ".join(AI_CLI_NAMES)),
+        "--cli",
+        action="append",
+        default=[],
+        help=f"AI CLI profile to load (repeatable, or 'all').  "
+        f"choices: {', '.join(AI_CLI_NAMES)}",
     )
     return parser
 
@@ -101,8 +115,9 @@ def _make_opts_parser(prog):
 # sub-command handlers
 # ------------------------------------------------------------------
 
+
 def _handle_on(argv):
-    parser = _make_opts_parser("{} --on".format(_PROG))
+    parser = _make_opts_parser(f"{_PROG} --on")
     opts = parser.parse_args(argv)
     cfg = _cfg.load()
     runner = _build_runner(opts, cfg)
@@ -110,14 +125,10 @@ def _handle_on(argv):
     response_display = opts.response or cfg.get("response", "y")
     loaded = _resolve_categories(opts.cli)
     print(
-        "\x1b[32m[auto-yes]\x1b[0m session started. "
-        "prompts will be auto-responded with '{}'.".format(response_display)
+        f"\x1b[32m[auto-yes]\x1b[0m session started. "
+        f"prompts will be auto-responded with '{response_display}'."
     )
-    print(
-        "\x1b[32m[auto-yes]\x1b[0m loaded profiles: {}".format(
-            ", ".join(loaded)
-        )
-    )
+    print(f"\x1b[32m[auto-yes]\x1b[0m loaded profiles: {', '.join(loaded)}")
     print("\x1b[32m[auto-yes]\x1b[0m type 'exit' to end the session.")
 
     code = runner.run_shell()
@@ -129,8 +140,7 @@ def _handle_on(argv):
 def _handle_off():
     if _is_active():
         print(
-            "\x1b[32m[auto-yes]\x1b[0m you are inside an auto-yes session. "
-            "type 'exit' to leave."
+            "\x1b[32m[auto-yes]\x1b[0m you are inside an auto-yes session. " "type 'exit' to leave."
         )
     else:
         print("\x1b[32m[auto-yes]\x1b[0m auto-yes is not active.")
@@ -147,17 +157,17 @@ def _handle_run(argv):
     if "--" in argv:
         idx = argv.index("--")
         our_argv = argv[:idx]
-        cmd_argv = argv[idx + 1:]
+        cmd_argv = argv[idx + 1 :]
     else:
         our_argv = []
         cmd_argv = argv
 
     if not cmd_argv:
         print("error: no command specified", file=sys.stderr)
-        print("usage: {} run [OPTIONS] -- COMMAND...".format(_PROG), file=sys.stderr)
+        print(f"usage: {_PROG} run [OPTIONS] -- COMMAND...", file=sys.stderr)
         sys.exit(1)
 
-    parser = _make_opts_parser("{} run".format(_PROG))
+    parser = _make_opts_parser(f"{_PROG} run")
     opts = parser.parse_args(our_argv)
     cfg = _cfg.load()
     runner = _build_runner(opts, cfg)
@@ -178,24 +188,84 @@ def _handle_patterns(argv):
 
     for name in show_categories:
         if name not in REGISTRY:
-            print("unknown category: {}".format(name), file=sys.stderr)
+            print(f"unknown category: {name}", file=sys.stderr)
             continue
 
         entry = REGISTRY[name]
         pats = entry["patterns"]
-        print("[{}] {} ({})".format(name, entry["description"], len(pats)))
+        print(f"[{name}] {entry['description']} ({len(pats)})")
         if not pats:
             print("  (none)")
         for src, resp in pats:
-            tag = " -> '{}'".format(resp) if resp is not None else ""
-            print("  {}{}".format(src, tag))
+            tag = f" -> '{resp}'" if resp is not None else ""
+            print(f"  {src}{tag}")
         print()
 
     if custom:
-        print("[custom] user-defined ({})".format(len(custom)))
+        print(f"[custom] user-defined ({len(custom)})")
         for pat in custom:
-            print("  {}".format(pat))
+            print(f"  {pat}")
         print()
+
+
+def _handle_list():
+    """List all available CLI profiles with description and pattern count."""
+    print("available CLI profiles (use with --cli NAME):\n")
+    print(f"  {'NAME':<12s} {'DESCRIPTION':<35s} {'PATTERNS':>8s}")
+    print(f"  {'-' * 12:<12s} {'-' * 35:<35s} {'-' * 8:>8s}")
+
+    for name, desc in available_categories():
+        count = len(REGISTRY[name]["patterns"])
+        marker = " (always loaded)" if name == "generic" else ""
+        print(f"  {name:<12s} {desc:<35s} {count:>8d}{marker}")
+
+    total = sum(len(e["patterns"]) for e in REGISTRY.values())
+    print(f"\n  {len(REGISTRY)} categories, {total} patterns total")
+    print(
+        "\ntip: run 'auto-yes <profile> [args...]' to wrap a tool directly "
+        "(recommended)"
+    )
+
+
+def _handle_wrap(profile, argv):
+    """Shorthand: ``auto-yes claude "fix tests"`` wraps the CLI tool directly.
+
+    Equivalent to ``auto-yes run -v --cli <profile> -- <profile> <argv...>``.
+    Verbose is on by default so users can see auto-yes in action.
+    """
+    cfg = _cfg.load()
+    response = cfg.get("response", "y")
+    cooldown = cfg.get("cooldown", 0.5)
+
+    extra = list(cfg.get("custom_patterns", []))
+
+    categories = _resolve_categories([profile])
+
+    runner = Runner(
+        response=response,
+        cooldown=cooldown,
+        verbose=True,
+        categories=categories,
+        extra_patterns=extra or None,
+    )
+
+    # if -- is present, use everything after it as the command
+    if "--" in argv:
+        idx = argv.index("--")
+        cmd_argv = argv[idx + 1:]
+    else:
+        cmd_argv = [profile] + list(argv)
+
+    if not cmd_argv:
+        cmd_argv = [profile]
+
+    print(
+        f"\x1b[32m[auto-yes]\x1b[0m wrapping '{cmd_argv[0]}' "
+        f"with profile: generic, {profile}"
+    )
+
+    code = runner.run_command(cmd_argv)
+    sys.exit(code)
 
 
 def _handle_add_pattern(argv):
@@ -204,7 +274,7 @@ def _handle_add_pattern(argv):
         sys.exit(1)
     pattern = argv[0]
     _cfg.add_pattern(pattern)
-    print("added pattern: {}".format(pattern))
+    print(f"added pattern: {pattern}")
 
 
 def _handle_del_pattern(argv):
@@ -214,13 +284,14 @@ def _handle_del_pattern(argv):
     pattern = argv[0]
     cfg = _cfg.remove_pattern(pattern)
     if pattern not in cfg.get("custom_patterns", []):
-        print("removed pattern: {}".format(pattern))
+        print(f"removed pattern: {pattern}")
     else:
-        print("pattern not found: {}".format(pattern))
+        print(f"pattern not found: {pattern}")
 
 
 def _is_active():
     import os
+
     return os.environ.get("AUTO_YES_ACTIVE") == "1"
 
 
@@ -228,17 +299,23 @@ def _is_active():
 # help
 # ------------------------------------------------------------------
 
-_HELP = """\
-auto-yes v{version} - automatically respond 'yes' to CLI prompts
+_HELP = f"""\
+auto-yes v{__version__} - automatically respond 'yes' to CLI prompts
 
-usage:
-  {prog} --on [OPTIONS]            start an auto-yes shell session
-  {prog} --off                     exit info
-  {prog} status                    check if auto-yes is active
-  {prog} run [OPTIONS] -- CMD...   run a single command with auto-yes
-  {prog} patterns [CATEGORY...]    list prompt patterns (optionally filtered)
-  {prog} add-pattern PATTERN       add a custom prompt pattern
-  {prog} del-pattern PATTERN       remove a custom prompt pattern
+usage (recommended):
+  {_PROG} <profile> [ARGS...]       wrap an AI CLI tool directly (single process)
+
+usage (advanced):
+  {_PROG} --on [OPTIONS]            start an auto-yes shell session (global)
+  {_PROG} run [OPTIONS] -- CMD...   run a single command with auto-yes
+  {_PROG} list, -l, --list          list all available CLI profiles
+  {_PROG} patterns [CATEGORY...]    list prompt patterns
+  {_PROG} add-pattern PATTERN       add a custom prompt pattern
+  {_PROG} del-pattern PATTERN       remove a custom prompt pattern
+  {_PROG} status                    check if auto-yes is active
+  {_PROG} --off                     exit info
+
+available profiles: {', '.join(AI_CLI_NAMES)}
 
 options (for --on / run):
   --response TEXT     text to send (default: y)
@@ -246,22 +323,21 @@ options (for --on / run):
   --verbose, -v       show when auto-yes responds
   --pattern REGEX     extra pattern (repeatable)
   --cli NAME          AI CLI profile to load (repeatable, or 'all')
-                      choices: {cli_names}
 
 examples:
-  {prog} --on                                   enter an auto-yes shell
-  {prog} --on --cli claude                      with Claude patterns
-  {prog} --on --cli all                         with all AI CLI patterns
-  {prog} run --cli codex -- codex "fix tests"   wrap Codex CLI
-  {prog} run -v -- pip install flask             verbose single command
-  {prog} patterns claude codex                  show specific categories
-  {prog} add-pattern 'accept\\?'                add custom pattern
-""".format(version=__version__, prog=_PROG, cli_names=", ".join(AI_CLI_NAMES))
+  {_PROG} claude "fix the tests"                 wrap claude (recommended)
+  {_PROG} cursor                                 wrap cursor-agent
+  {_PROG} aider --model gpt-4                    wrap aider
+  {_PROG} --on --cli all                         global shell with all profiles
+  {_PROG} run --cli codex -- codex "fix tests"   explicit run mode
+  {_PROG} list                                   show all profiles
+"""
 
 
 # ------------------------------------------------------------------
 # entry point
 # ------------------------------------------------------------------
+
 
 def main(argv=None):
     if argv is None:
@@ -272,7 +348,7 @@ def main(argv=None):
         return
 
     if argv[0] in ("--version", "-V"):
-        print("{} {}".format(_PROG, __version__))
+        print(f"{_PROG} {__version__}")
         return
 
     cmd = argv[0]
@@ -285,15 +361,24 @@ def main(argv=None):
         "off": _handle_off,
         "status": _handle_status,
         "run": lambda: _handle_run(rest),
+        "list": _handle_list,
+        "-l": _handle_list,
+        "--list": _handle_list,
         "patterns": lambda: _handle_patterns(rest),
         "add-pattern": lambda: _handle_add_pattern(rest),
         "del-pattern": lambda: _handle_del_pattern(rest),
     }
 
     handler = dispatch.get(cmd)
-    if handler is None:
-        print("unknown command: {}".format(cmd), file=sys.stderr)
-        print(_HELP, file=sys.stderr)
-        sys.exit(1)
+    if handler is not None:
+        handler()
+        return
 
-    handler()
+    # if cmd matches a known AI CLI profile, use shorthand wrap mode
+    if cmd in REGISTRY and cmd != "generic":
+        _handle_wrap(cmd, rest)
+        return
+
+    print(f"unknown command: {cmd}", file=sys.stderr)
+    print(_HELP, file=sys.stderr)
+    sys.exit(1)

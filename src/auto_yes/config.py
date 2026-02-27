@@ -37,13 +37,14 @@ def _config_path():
 # public helpers
 # ------------------------------------------------------------------
 
+
 def load():
     """Load config from disk, falling back to defaults for missing keys."""
     path = _config_path()
     if not os.path.isfile(path):
         return dict(_DEFAULTS)
 
-    with open(path, "r", encoding="utf-8") as fh:
+    with open(path, encoding="utf-8") as fh:
         data = json.load(fh)
 
     merged = dict(_DEFAULTS)

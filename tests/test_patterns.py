@@ -21,19 +21,19 @@ class TestRegistry:
 
     def test_every_entry_has_description(self):
         for name, entry in REGISTRY.items():
-            assert "description" in entry, "{} missing description".format(name)
+            assert "description" in entry, f"{name} missing description"
             assert isinstance(entry["description"], str)
 
     def test_every_entry_has_patterns_list(self):
         for name, entry in REGISTRY.items():
-            assert "patterns" in entry, "{} missing patterns".format(name)
+            assert "patterns" in entry, f"{name} missing patterns"
             assert isinstance(entry["patterns"], list)
 
     def test_pattern_tuples_are_valid(self):
         for name, entry in REGISTRY.items():
             for item in entry["patterns"]:
-                assert isinstance(item, tuple), "{}: not a tuple".format(name)
-                assert len(item) == 2, "{}: expected 2-tuple".format(name)
+                assert isinstance(item, tuple), f"{name}: not a tuple"
+                assert len(item) == 2, f"{name}: expected 2-tuple"
                 src, resp = item
                 assert isinstance(src, str)
                 assert resp is None or isinstance(resp, str)
@@ -56,6 +56,7 @@ class TestGetPatterns:
 
     def test_unknown_category_raises(self):
         import pytest
+
         with pytest.raises(KeyError):
             get_patterns(["nonexistent"])
 

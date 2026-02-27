@@ -36,7 +36,7 @@ class PromptDetector:
         self._entries = []
         self._load_categories(categories)
 
-        for pat in (extra_patterns or []):
+        for pat in extra_patterns or []:
             self._entries.append((re.compile(pat, re.IGNORECASE), pat, None))
 
     # ------------------------------------------------------------------
@@ -92,9 +92,7 @@ class PromptDetector:
 
     def add_pattern(self, pattern_str, response=None):
         """Register an additional pattern at runtime."""
-        self._entries.append(
-            (re.compile(pattern_str, re.IGNORECASE), pattern_str, response)
-        )
+        self._entries.append((re.compile(pattern_str, re.IGNORECASE), pattern_str, response))
 
     @property
     def pattern_strings(self):

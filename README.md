@@ -111,26 +111,37 @@ is **always loaded**.  AI CLI profiles are opt-in via `--cli`.
 
 | Type | Examples |
 |------|----------|
-| Bracket choices | `[y/n]`, `[Y/n]`, `(y/N)`, `[yes/no]` |
-| Question sentences | `Continue?`, `Proceed?`, `Are you sure?` |
-| Destructive prompts | `Overwrite file?`, `Remove directory?`, `Delete …?` |
-| Package managers | `Is this ok [y/d/N]`, `Do you want to install …?` |
-| Full-word yes | `Type 'yes' to continue` → responds `yes` |
-| Press enter | `Press Enter to continue` → responds with empty line |
+| Bracket choices | `[y/n]`, `[Y/n]`, `(y/N)`, `[yes/no]`, `([y]/n)`, `(y)` |
+| Styled choices | `[Y]es / [N]o`, bare `y/n:` |
+| Question sentences | `Continue?`, `Proceed?`, `Are you sure?`, `Would you like to…?` |
+| Safe action prompts | `Allow?`, `Approve?`, `Accept?`, `Download?`, `Enable?`, `Create?` |
+| Excluded (dangerous) | `Overwrite?`, `Delete?`, `Remove?`, `Upgrade?`, `Update?`, `Merge?`, `Restart?`, `Reboot?`, `Install?` (use `--pattern` to add manually) |
+| Agreement prompts | `Do you agree?`, `Do you accept?`, `Accept the license`, `Agree to the terms` |
+| Need/require prompts | `Need to install?`, `Required?`, `Necessary?` |
+| Package managers | `Is this ok [y/d/N]` (pip excluded to avoid accidental uninstall) |
+| SSH fingerprint | `continue connecting (yes/no/[fingerprint])?` → responds `yes` |
+| Terraform | `Only 'yes' will be accepted` → responds `yes` |
+| Full-word yes | `Type 'yes' to continue`, `Type 'YES' to confirm`, `Enter 'yes' to proceed` |
+| Press enter/key | `Press Enter to continue`, `Press any key to continue` → responds with empty |
+| Default value | `(default: Y)`, `[default=yes]` → responds with empty (accept default) |
 
 ### AI CLI profiles
 
 | Profile | Tool | Key patterns |
 |---------|------|-------------|
-| `claude` | Anthropic Claude Code | `1. Yes, I trust this folder`, API key prompt |
-| `gemini` | Google Gemini CLI | `1. Allow once`, `1. Yes` |
-| `codex` | OpenAI Codex CLI | `1. Approve and run now`, `1. Yes` |
-| `copilot` | GitHub Copilot CLI | `1. Yes, proceed` |
-| `cursor` | Cursor Agent CLI | `Run (once) (y) (enter)`, `Trust this workspace` |
+| `claude` | Anthropic Claude Code | `1. Yes, I trust this folder`, `Yes, allow`, API key prompt |
+| `gemini` | Google Gemini CLI | `1. Allow once`, `2. Allow for this session`, `3. Always allow` |
+| `codex` | OpenAI Codex CLI | `1. Approve and run now`, `1. Yes, allow Codex to work` |
+| `copilot` | GitHub Copilot CLI | `1. Yes, proceed`, `Allow Copilot to run` |
+| `cursor` | Cursor Agent CLI | `→ Run (once) (y)`, `→ Run (always) (a)`, `Skip (esc or n)`, `Trust this workspace` |
 | `grok` | xAI Grok CLI | `1. Yes` |
-| `auggie` | Augment Code CLI | `Enable indexing` |
+| `auggie` | Augment Code CLI | `[Y] Enable indexing` |
 | `amp` | Sourcegraph Amp CLI | `Approve` |
-| `qwen` | Alibaba Qwen Code | (reserved) |
+| `aider` | Aider AI Coding | `(Y)es/(N)o`, `Run shell command?`, `Add … to the chat?`, `Apply edit to …?` |
+| `openhands` | OpenHands AI Agent | `Do you want to execute this action?`, `Approve` |
+| `windsurf` | Codeium Windsurf | `Accept changes?`, `Run this command?` |
+| `qwen` | Alibaba Qwen Code | `1. Yes`, `Approve execution?` |
+| `amazonq` | Amazon Q Developer | `Do you approve this action?`, `Accept suggestion?` |
 
 ```bash
 # use with a specific AI CLI

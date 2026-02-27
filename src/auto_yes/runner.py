@@ -5,16 +5,16 @@ between the user's real terminal and the child, and injects auto-responses
 whenever the output matches a known prompt pattern.
 
 Unix  : built-in ``pty`` + ``select`` (zero external deps)
-Windows: optional ``pywinpty`` → fallback to subprocess pipes + threading
+Windows: optional ``pywinpty`` -> fallback to subprocess pipes + threading
 """
 
+import contextlib
 import errno
 import os
 import signal
 import sys
 import time
 
-from auto_yes._ansi import clean_text
 from auto_yes.detector import PromptDetector
 
 _BUFFER_LIMIT = 8192
@@ -68,7 +68,6 @@ class Runner:
         import fcntl
         import pty
         import select
-        import struct
         import termios
         import tty
 
@@ -143,10 +142,10 @@ class Runner:
 
                 try:
                     readable, _, _ = select.select(watch_fds, [], [], 0.05)
-                except (select.error, InterruptedError):
+                except (OSError, InterruptedError):
                     continue
 
-                # ---- user input → child ----
+                # ---- user input -> child ----
                 if stdin_fd in readable:
                     try:
                         data = os.read(stdin_fd, 4096)
@@ -156,7 +155,7 @@ class Runner:
                     except OSError:
                         break
 
-                # ---- child output → user (with interception) ----
+                # ---- child output -> user (with interception) ----
                 if master_fd in readable:
                     try:
                         data = os.read(master_fd, 4096)
@@ -194,10 +193,8 @@ class Runner:
             if old_tty_attrs is not None:
                 termios.tcsetattr(stdin_fd, termios.TCSAFLUSH, old_tty_attrs)
             signal.signal(signal.SIGWINCH, prev_winch)
-            try:
+            with contextlib.suppress(OSError):
                 os.close(master_fd)
-            except OSError:
-                pass
 
         return exit_code
 
@@ -230,13 +227,11 @@ class Runner:
 
         if self.verbose:
             msg = (
-                "\r\n\x1b[33m[auto-yes] responded '{}' (matched: {})\x1b[0m\r\n"
-                .format(response, result.pattern)
+                f"\r\n\x1b[33m[auto-yes] responded '{response}'"
+                f" (matched: {result.pattern})\x1b[0m\r\n"
             )
-            try:
+            with contextlib.suppress(OSError):
                 os.write(stdout_fd, msg.encode())
-            except OSError:
-                pass
 
         return True
 
@@ -363,7 +358,7 @@ class Runner:
         self._last_response_time = time.time()
 
         if self.verbose:
-            msg = "[auto-yes] responded '{}'\n".format(response)
+            msg = f"[auto-yes] responded '{response}'\n"
             sys.stderr.write(msg)
 
         return True

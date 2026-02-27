@@ -1,7 +1,5 @@
 """Tests for auto_yes.config module."""
 
-import json
-import os
 import tempfile
 
 import auto_yes.config as cfg
