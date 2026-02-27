@@ -22,7 +22,13 @@ import sys
 
 from auto_yes import __version__
 from auto_yes import config as _cfg
-from auto_yes.patterns import AI_CLI_NAMES, REGISTRY, available_categories, get_command
+from auto_yes.patterns import (
+    AI_CLI_NAMES,
+    REGISTRY,
+    available_categories,
+    get_command,
+    resolve_profile,
+)
 from auto_yes.runner import Runner
 
 _PROG = "auto-yes"
@@ -399,9 +405,10 @@ def main(argv=None):
         handler()
         return
 
-    # if cmd matches a known AI CLI profile, use shorthand wrap mode
-    if cmd in REGISTRY and cmd != "generic":
-        _handle_wrap(cmd, rest)
+    # if cmd matches a known AI CLI profile (by name or binary), use wrap mode
+    profile = resolve_profile(cmd)
+    if profile is not None:
+        _handle_wrap(profile, rest)
         return
 
     print(f"unknown command: {cmd}", file=sys.stderr)

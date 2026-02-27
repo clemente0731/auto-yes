@@ -310,6 +310,24 @@ def get_command(profile):
     return list(entry.get("command", [profile]))
 
 
+def resolve_profile(name):
+    """Look up a profile by name or by its real binary command.
+
+    Returns the profile key if found, ``None`` otherwise.
+    Matches profile names first, then falls back to checking the first
+    element of each entry's ``command`` list (e.g. ``"agent"`` -> ``"cursor"``).
+    """
+    if name in REGISTRY and name != "generic":
+        return name
+    for key, entry in REGISTRY.items():
+        if key == "generic":
+            continue
+        cmd = entry.get("command", [key])
+        if cmd and cmd[0] == name:
+            return key
+    return None
+
+
 def available_categories():
     """Return a list of ``(name, description)`` for every registered category."""
     return [(k, v["description"]) for k, v in REGISTRY.items()]

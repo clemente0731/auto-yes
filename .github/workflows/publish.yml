@@ -1,4 +1,4 @@
-name: Publish to PyPI
+name: Publish
 
 on:
   push:
@@ -13,14 +13,11 @@ jobs:
     name: CI gate
     uses: ./.github/workflows/ci.yml
 
-  # ── publish to PyPI via trusted publisher (OIDC) ──────────────────
-  publish:
-    name: Publish
+  # ── build distribution packages ────────────────────────────────────
+  build:
+    name: Build packages
     needs: ci
     runs-on: ubuntu-latest
-    environment: pypi
-    permissions:
-      id-token: write
     steps:
       - uses: actions/checkout@v4
 
@@ -34,5 +31,51 @@ jobs:
       - name: Build sdist and wheel
         run: python -m build
 
+      - name: Upload dist artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  # ── publish to PyPI via trusted publisher (OIDC) ──────────────────
+  publish-pypi:
+    name: Publish to PyPI
+    needs: build
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - name: Download dist artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
+
+  # ── create GitHub Release with packages ────────────────────────────
+  github-release:
+    name: GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download dist artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="${GITHUB_REF#refs/tags/}"
+          gh release create "$tag" dist/* \
+            --title "$tag" \
+            --generate-notes
