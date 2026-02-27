@@ -43,9 +43,9 @@ def _resolve_categories(cli_flags):
     """Turn the ``--cli`` flag values into a deduplicated category list.
 
     ``"all"`` expands to every registered category.
-    ``"generic"`` is always included.
+    ``"generic"`` is opt-in only (use ``--cli generic`` or ``--cli all``).
     """
-    categories = ["generic"]
+    categories = []
 
     for name in cli_flags or []:
         if name == "all":
@@ -230,7 +230,7 @@ def _handle_list():
     for name, desc in available_categories():
         count = len(REGISTRY[name]["patterns"])
         cmd = " ".join(get_command(name)) if name != "generic" else "-"
-        marker = " (always loaded)" if name == "generic" else ""
+        marker = " (opt-in)" if name == "generic" else ""
         print(
             f"  {name:<12s} {cmd:<16s} "
             f"{desc:<35s} {count:>8d}{marker}"
@@ -280,9 +280,10 @@ def _handle_wrap(profile, argv):
         cmd_argv = real_cmd
 
     cmd_display = " ".join(real_cmd)
+    loaded = ", ".join(categories)
     print(
         f"\x1b[32m[auto-yes]\x1b[0m wrapping '{cmd_display}' "
-        f"with profile: generic, {profile}"
+        f"with profile: {loaded}"
     )
 
     code = runner.run_command(cmd_argv)
@@ -352,6 +353,7 @@ _HELP = f"""\
   --verbose, -v       show when auto-yes responds
   --pattern REGEX     extra pattern (repeatable)
   --cli NAME          AI CLI profile to load (repeatable, or 'all')
+                      note: 'generic' is opt-in, not loaded by default
 
 \x1b[97mexamples:\x1b[0m
   \x1b[96m{_PROG} claude "fix the tests"\x1b[0m                 wrap claude (recommended)
@@ -359,7 +361,7 @@ _HELP = f"""\
   \x1b[96m{_PROG} aider --model gpt-4\x1b[0m                    wrap aider
   \x1b[96m{_PROG} copilot\x1b[0m                                wrap gh copilot
   \x1b[96m{_PROG} amazonq chat "help me"\x1b[0m                 wrap Amazon Q (q chat)
-  \x1b[36m{_PROG} --on --cli all\x1b[0m                         global shell with all profiles
+  \x1b[36m{_PROG} --on --cli claude --cli generic\x1b[0m         shell with claude + generic
   \x1b[36m{_PROG} run --cli codex -- codex "fix tests"\x1b[0m   explicit run mode
   \x1b[36m{_PROG} list\x1b[0m                                   show all profiles
 """

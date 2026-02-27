@@ -121,10 +121,12 @@ auto-yes --off                     exit info
 
 ## Pattern categories
 
-Patterns are organized by category for maintainability.  The `generic` category
-is **always loaded**.  AI CLI profiles are opt-in via `--cli`.
+Patterns are organized by category for maintainability.  Each AI CLI profile
+only loads its own patterns — no broad generic rules that might auto-confirm
+dangerous prompts like `pip uninstall`.  The `generic` category (universal
+`[y/n]`, `Continue?`, etc.) is **opt-in** via `--cli generic` if you want it.
 
-### generic (always loaded)
+### generic (opt-in via `--cli generic`)
 
 | Type | Examples |
 |------|----------|
@@ -161,12 +163,14 @@ is **always loaded**.  AI CLI profiles are opt-in via `--cli`.
 | `amazonq` | `q` | Amazon Q Developer | `Do you approve this action?`, `Accept suggestion?` |
 
 ```bash
-# recommended: wrap directly
+# recommended: wrap directly (only loads tool-specific patterns)
 auto-yes claude "fix the tests"
 auto-yes cursor chat "fix the bug"
 
-# advanced: explicit run mode
-auto-yes run --cli codex -- codex "fix tests"
+# opt-in generic patterns if needed
+auto-yes --on --cli claude --cli generic
+
+# load all profiles including generic
 auto-yes --on --cli all
 
 # inspect patterns for a specific profile

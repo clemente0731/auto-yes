@@ -16,7 +16,7 @@ structure.  No other file needs to change.
 """
 
 # ------------------------------------------------------------------
-# generic: universal y/n / yes/no prompts (always loaded)
+# generic: universal y/n / yes/no prompts (opt-in via --cli generic)
 # ------------------------------------------------------------------
 _GENERIC = {
     "description": "universal interactive prompt patterns",
