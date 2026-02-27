@@ -94,6 +94,7 @@ _GENERIC = {
 # ------------------------------------------------------------------
 _CLAUDE = {
     "description": "Anthropic Claude Code CLI",
+    "command": ["claude"],
     "patterns": [
         (r">\s*1\.\s*Yes,?\s+I trust this folder", None),
         (r"Do you want to use this API key\s*\?", None),
@@ -110,6 +111,7 @@ _CLAUDE = {
 # ------------------------------------------------------------------
 _GEMINI = {
     "description": "Google Gemini CLI",
+    "command": ["gemini"],
     "patterns": [
         (r"│\s*●?\s*1\.\s*(?:Yes,?\s+)?[Aa]llow once", None),
         (r"│\s*●?\s*1\.\s*Yes", None),
@@ -123,6 +125,7 @@ _GEMINI = {
 # ------------------------------------------------------------------
 _CODEX = {
     "description": "OpenAI Codex CLI",
+    "command": ["codex"],
     "patterns": [
         (r">\s*1\.\s*Yes", None),
         (r">\s*1\.\s*Yes,?\s+allow Codex to work", None),
@@ -135,6 +138,7 @@ _CODEX = {
 # ------------------------------------------------------------------
 _COPILOT = {
     "description": "GitHub Copilot CLI",
+    "command": ["gh", "copilot"],
     "patterns": [
         (r"│?\s*❯?\s*1\.\s*Yes,?\s+proceed", None),  # noqa: RUF001
         (r"❯\s*1\.\s*Yes", None),  # noqa: RUF001
@@ -147,6 +151,7 @@ _COPILOT = {
 # ------------------------------------------------------------------
 _CURSOR = {
     "description": "Cursor Agent CLI",
+    "command": ["agent"],
     "patterns": [
         (r"→\s*Run\s+\(once\)\s+\(y\)(?:\s+\(enter\))?", None),
         (r"→\s*Run\s+\(always\)\s+\(a\)", None),
@@ -160,6 +165,7 @@ _CURSOR = {
 # ------------------------------------------------------------------
 _GROK = {
     "description": "xAI Grok CLI",
+    "command": ["grok"],
     "patterns": [
         (r"^\s*1\.\s*Yes", None),
     ],
@@ -170,6 +176,7 @@ _GROK = {
 # ------------------------------------------------------------------
 _AUGGIE = {
     "description": "Augment Code Auggie CLI",
+    "command": ["auggie"],
     "patterns": [
         (r"\[Y\]\s*Enable indexing", None),
     ],
@@ -180,6 +187,7 @@ _AUGGIE = {
 # ------------------------------------------------------------------
 _AMP = {
     "description": "Sourcegraph Amp CLI",
+    "command": ["amp"],
     "patterns": [
         (r"^\s{0,4}Approve\s", None),
     ],
@@ -190,6 +198,7 @@ _AMP = {
 # ------------------------------------------------------------------
 _AIDER = {
     "description": "Aider AI coding assistant",
+    "command": ["aider"],
     "patterns": [
         (r"\(Y\)es/\(N\)o", None),
         (r"Add .+ to the chat\?", None),
@@ -206,6 +215,7 @@ _AIDER = {
 # ------------------------------------------------------------------
 _OPENHANDS = {
     "description": "OpenHands AI agent",
+    "command": ["openhands"],
     "patterns": [
         (r"Do you want to execute this action\s*\?", None),
         (r">\s*Approve", None),
@@ -217,6 +227,7 @@ _OPENHANDS = {
 # ------------------------------------------------------------------
 _WINDSURF = {
     "description": "Codeium Windsurf / Cascade CLI",
+    "command": ["windsurf"],
     "patterns": [
         (r"Accept (?:all )?changes\s*\?", None),
         (r"Run this command\s*\?", None),
@@ -228,6 +239,7 @@ _WINDSURF = {
 # ------------------------------------------------------------------
 _QWEN = {
     "description": "Alibaba Qwen Code CLI",
+    "command": ["qwen"],
     "patterns": [
         (r">\s*1\.\s*Yes", None),
         (r"Approve execution\s*\?", None),
@@ -239,6 +251,7 @@ _QWEN = {
 # ------------------------------------------------------------------
 _AMAZONQ = {
     "description": "Amazon Q Developer CLI",
+    "command": ["q"],
     "patterns": [
         (r"Do you approve this action\s*\?", None),
         (r"Accept\s+suggestion\s*\?", None),
@@ -284,6 +297,17 @@ def get_patterns(categories):
                 seen.add(key)
                 result.append(entry)
     return result
+
+
+def get_command(profile):
+    """Return the real CLI command (as a list) for the given *profile*.
+
+    Falls back to ``[profile]`` if no ``command`` field is defined.
+    """
+    entry = REGISTRY.get(profile)
+    if entry is None:
+        return [profile]
+    return list(entry.get("command", [profile]))
 
 
 def available_categories():

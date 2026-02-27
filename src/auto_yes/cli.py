@@ -21,7 +21,7 @@ import sys
 
 from auto_yes import __version__
 from auto_yes import config as _cfg
-from auto_yes.patterns import AI_CLI_NAMES, REGISTRY, available_categories
+from auto_yes.patterns import AI_CLI_NAMES, REGISTRY, available_categories, get_command
 from auto_yes.runner import Runner
 
 _PROG = "auto-yes"
@@ -210,14 +210,24 @@ def _handle_patterns(argv):
 
 def _handle_list():
     """List all available CLI profiles with description and pattern count."""
-    print("available CLI profiles (use with --cli NAME):\n")
-    print(f"  {'NAME':<12s} {'DESCRIPTION':<35s} {'PATTERNS':>8s}")
-    print(f"  {'-' * 12:<12s} {'-' * 35:<35s} {'-' * 8:>8s}")
+    print("available CLI profiles:\n")
+    print(
+        f"  {'PROFILE':<12s} {'COMMAND':<16s} "
+        f"{'DESCRIPTION':<35s} {'PATTERNS':>8s}"
+    )
+    print(
+        f"  {'-' * 12:<12s} {'-' * 16:<16s} "
+        f"{'-' * 35:<35s} {'-' * 8:>8s}"
+    )
 
     for name, desc in available_categories():
         count = len(REGISTRY[name]["patterns"])
+        cmd = " ".join(get_command(name)) if name != "generic" else "-"
         marker = " (always loaded)" if name == "generic" else ""
-        print(f"  {name:<12s} {desc:<35s} {count:>8d}{marker}")
+        print(
+            f"  {name:<12s} {cmd:<16s} "
+            f"{desc:<35s} {count:>8d}{marker}"
+        )
 
     total = sum(len(e["patterns"]) for e in REGISTRY.values())
     print(f"\n  {len(REGISTRY)} categories, {total} patterns total")
@@ -225,12 +235,14 @@ def _handle_list():
         "\ntip: run 'auto-yes <profile> [args...]' to wrap a tool directly "
         "(recommended)"
     )
+    print("     e.g. auto-yes cursor chat 'fix the bug'")
 
 
 def _handle_wrap(profile, argv):
     """Shorthand: ``auto-yes claude "fix tests"`` wraps the CLI tool directly.
 
-    Equivalent to ``auto-yes run -v --cli <profile> -- <profile> <argv...>``.
+    Equivalent to ``auto-yes run -v --cli <profile> -- <binary> <argv...>``.
+    The real binary name is looked up from the REGISTRY ``command`` field.
     Verbose is on by default so users can see auto-yes in action.
     """
     cfg = _cfg.load()
@@ -249,18 +261,20 @@ def _handle_wrap(profile, argv):
         extra_patterns=extra or None,
     )
 
-    # if -- is present, use everything after it as the command
+    real_cmd = get_command(profile)
+
     if "--" in argv:
         idx = argv.index("--")
         cmd_argv = argv[idx + 1:]
     else:
-        cmd_argv = [profile] + list(argv)
+        cmd_argv = real_cmd + list(argv)
 
     if not cmd_argv:
-        cmd_argv = [profile]
+        cmd_argv = real_cmd
 
+    cmd_display = " ".join(real_cmd)
     print(
-        f"\x1b[32m[auto-yes]\x1b[0m wrapping '{cmd_argv[0]}' "
+        f"\x1b[32m[auto-yes]\x1b[0m wrapping '{cmd_display}' "
         f"with profile: generic, {profile}"
     )
 
@@ -296,16 +310,24 @@ def _is_active():
 
 
 # ------------------------------------------------------------------
-# help
+# help / banner
 # ------------------------------------------------------------------
 
-_HELP = f"""\
-auto-yes v{__version__} - automatically respond 'yes' to CLI prompts
+# retro-futuristic banner: bright→dim cyan for AUTO, bright→dim magenta for YES
+_BANNER = (
+    "\n"
+    "  \x1b[96m▄▀█ █ █ ▀█▀ █▀█\x1b[0m  \x1b[90m//\x1b[0m  \x1b[95m█▄█ █▀▀ █▀\x1b[0m\n"
+    "  \x1b[36m█▀█ █▄█  █  █▄█\x1b[0m  \x1b[90m//\x1b[0m  \x1b[35m █  ██▄ ▄█\x1b[0m\n"
+    f"  \x1b[90m{'━' * 31}\x1b[0m\n"
+    f"  \x1b[93mv{__version__}\x1b[0m \x1b[90m·\x1b[0m auto-respond to CLI prompts\n"
+)
 
-usage (recommended):
+_HELP = f"""\
+{_BANNER}
+\x1b[97musage (recommended):\x1b[0m
   {_PROG} <profile> [ARGS...]       wrap an AI CLI tool directly (single process)
 
-usage (advanced):
+\x1b[97musage (advanced):\x1b[0m
   {_PROG} --on [OPTIONS]            start an auto-yes shell session (global)
   {_PROG} run [OPTIONS] -- CMD...   run a single command with auto-yes
   {_PROG} list, -l, --list          list all available CLI profiles
@@ -315,22 +337,24 @@ usage (advanced):
   {_PROG} status                    check if auto-yes is active
   {_PROG} --off                     exit info
 
-available profiles: {', '.join(AI_CLI_NAMES)}
+\x1b[97mavailable profiles:\x1b[0m {', '.join(AI_CLI_NAMES)}
 
-options (for --on / run):
+\x1b[97moptions (for --on / run):\x1b[0m
   --response TEXT     text to send (default: y)
   --cooldown FLOAT    seconds between responses (default: 0.5)
   --verbose, -v       show when auto-yes responds
   --pattern REGEX     extra pattern (repeatable)
   --cli NAME          AI CLI profile to load (repeatable, or 'all')
 
-examples:
-  {_PROG} claude "fix the tests"                 wrap claude (recommended)
-  {_PROG} cursor                                 wrap cursor-agent
-  {_PROG} aider --model gpt-4                    wrap aider
-  {_PROG} --on --cli all                         global shell with all profiles
-  {_PROG} run --cli codex -- codex "fix tests"   explicit run mode
-  {_PROG} list                                   show all profiles
+\x1b[97mexamples:\x1b[0m
+  \x1b[96m{_PROG} claude "fix the tests"\x1b[0m                 wrap claude (recommended)
+  \x1b[96m{_PROG} cursor chat "fix the bug"\x1b[0m              wrap cursor agent CLI
+  \x1b[96m{_PROG} aider --model gpt-4\x1b[0m                    wrap aider
+  \x1b[96m{_PROG} copilot\x1b[0m                                wrap gh copilot
+  \x1b[96m{_PROG} amazonq chat "help me"\x1b[0m                 wrap Amazon Q (q chat)
+  \x1b[36m{_PROG} --on --cli all\x1b[0m                         global shell with all profiles
+  \x1b[36m{_PROG} run --cli codex -- codex "fix tests"\x1b[0m   explicit run mode
+  \x1b[36m{_PROG} list\x1b[0m                                   show all profiles
 """
 
 
