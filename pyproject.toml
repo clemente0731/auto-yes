@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "auto-yes"
-version = "0.9.0"
+version = "0.9.1"
 description = "Automatically respond 'yes' to interactive CLI prompts via PTY proxy"
 readme = "README.md"
 license = "MIT"
@@ -46,6 +46,7 @@ dev = [
 
 [project.scripts]
 auto-yes = "auto_yes.cli:main"
+ay = "auto_yes.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/clemente0731/auto-yes"
